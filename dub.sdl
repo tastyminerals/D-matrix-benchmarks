@@ -1,0 +1,30 @@
+name "mir_benchmarks_2"
+description "D Mir benchmarks against NumPy."
+authors "tasty"
+copyright "Copyright © 2020, tasty"
+license "MIT"
+
+buildType "release" {
+    buildOptions "releaseMode" "inline" "optimize"
+    dflags "-boundscheck=off"
+}
+
+buildType "debug" {
+    buildOptions "debugMode" "debugInfo" "optimize"
+}
+
+buildType "debug-profile" {
+    buildOptions "debugMode" "debugInfo" "profile"
+}
+
+buildType "tests" {
+    buildOptions "unittests"
+}
+
+dependency "mir-random" version="~>2.2.14"
+dependency "mir-algorithm" version="~>3.9.2"
+dependency "pretty_array" version="~>1.0.2"
+#dependency "mir-blas" version="~>1.1.13"
+#subConfiguration "mir-blas" "openblas" # "mir-blas", "blas", "cblas", "mir-lapack", "twolib", "threelib", "openblas"
+targetType "executable"
+dflags-ldc "-mcpu=native"
