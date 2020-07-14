@@ -46,7 +46,8 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("sum 2x[%s, %s] matrices ()", dim, dim)] = timings.sum / timings.length;
+		experiments[format("elemwise sum 2x[%s, %s] matrices ()", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. nruns)
@@ -56,7 +57,8 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("mul 2x[%s, %s] matrices ", dim, dim)] = timings.sum / timings.length;
+		experiments[format("elemwise mul 2x[%s, %s] matrices ", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. nruns)
@@ -87,6 +89,24 @@ void main()
 			timings ~= secs;
 		}
 		experiments[format("argmax of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		timings = null;
+
+		foreach (i; 0 .. nruns)
+		{
+			auto secs = benchStd(makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
+			timings ~= secs;
+		}
+		experiments[format("std of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		timings = null;
+
+		foreach (i; 0 .. nruns)
+		{
+			auto secs = benchMean(makeRandomSlice2d!double(dim, dim, [
+						-0.1, 0.1
+					]));
+			timings ~= secs;
+		}
+		experiments[format("mean of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
 		timings = null;
 
 	}

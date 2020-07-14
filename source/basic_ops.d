@@ -1,9 +1,12 @@
 module basic_ops;
 
 import std.datetime.stopwatch : StopWatch;
+import std.math : abs, approxEqual;
 import mir.ndslice;
-import mir.math.common : pow;
+import mir.math.common : pow, sqrt, fastmath;
 import mir.math.sum : sum;
+import mir.math.stat : mean;
+import std.stdio;
 
 /// Measure 2D matrix addition.
 double bench2Dadd(T)(Slice!(T*, 2) matrixA, Slice!(T*, 2) matrixB)
@@ -60,6 +63,54 @@ private ulong[2] argMax(T)(Slice!(T*, 2) matrix, int axis = 0)
     return matrix.maxIndex;
 }
 
+/*
+Calculate mean for the given matrix using Welford's algorithm.
+*/
+@fastmath private double welfordMean(T)(Slice!(T*, 1) flatMatrix)
+{
+    pragma(inline, false);
+    if (flatMatrix.empty)
+        return 0.0;
+
+    double m0 = 0.0;
+    double m1 = 0.0;
+    double n = 0.0;
+    foreach (ref x; flatMatrix)
+    {
+        ++n;
+        m1 = m0 + (x - m0) / n;
+        m0 = m1;
+    }
+    return m1;
+}
+
+/*
+Calculate standard deviation for the given matrix.
+Here we use Welford's algorithm that does the calculation in one pass.
+*/
+@fastmath private double sd(T)(Slice!(T*, 1) flatMatrix)
+{
+    pragma(inline, false);
+    if (flatMatrix.empty)
+        return 0.0;
+
+    double m0 = 0.0;
+    double m1 = 0.0;
+    double s0 = 0.0;
+    double s1 = 0.0;
+    double n = 0.0;
+    foreach (ref x; flatMatrix)
+    {
+        ++n;
+        m1 = m0 + (x - m0) / n;
+        s1 = s0 + (x - m0) * (x - m1);
+        m0 = m1;
+        s0 = s1;
+    }
+    // switch to n - 1 for sample variance
+    return (s1 / n).sqrt;
+}
+
 /// Return the index of min value.
 double benchArgMin(T)(Slice!(T*, 2) matrix)
 {
@@ -84,4 +135,45 @@ double benchArgMax(T)(Slice!(T*, 2) matrix)
         ans = matrix.argMax;
     sw.stop;
     return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+/// Calculate standard deviation of the matrix.
+double benchStd(T)(Slice!(T*, 2) matrix)
+{
+    double ans;
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    for (int i; i < 1000; ++i)
+    {
+        ans = matrix.flattened.sd;
+    }
+    sw.stop;
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+/// Calculate mean of the matrix.
+double benchMean(T)(Slice!(T*, 2) matrix)
+{
+    double ans;
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    for (int i; i < 1000; ++i)
+    {
+        ans = matrix.flattened.mean;
+    }
+    sw.stop;
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+unittest
+{
+    import std.stdio;
+
+    auto m1 = [5, 3].iota!int.fuse;
+    assert(approxEqual(m1.flattened.sd, 4.32049));
+
+    auto m2 = [6, 4].iota!int.fuse;
+    assert(m2.flattened.welfordMean == 11.5);
 }
