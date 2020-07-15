@@ -5,7 +5,7 @@ import std.math : abs, approxEqual;
 import mir.ndslice;
 import mir.math.common : pow, sqrt, fastmath;
 import mir.math.sum : sum;
-import mir.math.stat : mean;
+import mir.math.stat : mean, standardDeviation;
 import std.stdio;
 
 /// Measure 2D matrix addition.
@@ -75,7 +75,7 @@ Calculate mean for the given matrix using Welford's algorithm.
     double m0 = 0.0;
     double m1 = 0.0;
     double n = 0.0;
-    foreach (ref x; flatMatrix)
+    foreach (x; flatMatrix.field)
     {
         ++n;
         m1 = m0 + (x - m0) / n;
@@ -88,7 +88,7 @@ Calculate mean for the given matrix using Welford's algorithm.
 Calculate standard deviation for the given matrix.
 Here we use Welford's algorithm that does the calculation in one pass.
 */
-@fastmath private double sd(T)(Slice!(T*, 1) flatMatrix)
+@fastmath private double welfordSD(T)(Slice!(T*, 1) flatMatrix)
 {
     pragma(inline, false);
     if (flatMatrix.empty)
@@ -99,7 +99,7 @@ Here we use Welford's algorithm that does the calculation in one pass.
     double s0 = 0.0;
     double s1 = 0.0;
     double n = 0.0;
-    foreach (ref x; flatMatrix)
+    foreach (x; flatMatrix.field)
     {
         ++n;
         m1 = m0 + (x - m0) / n;
@@ -109,6 +109,17 @@ Here we use Welford's algorithm that does the calculation in one pass.
     }
     // switch to n - 1 for sample variance
     return (s1 / n).sqrt;
+}
+
+@fastmath private double sd(T)(Slice!(T*, 1) flatMatrix)
+{
+    pragma(inline, false);
+    if (flatMatrix.empty)
+        return 0.0;
+    double n = cast(double) flatMatrix.length;
+    double mu = flatMatrix.mean;
+    return (flatMatrix.map!(a => (a - mu) ^^ 2)
+            .sum!"fast" / n).sqrt.abs;
 }
 
 /// Return the index of min value.
@@ -146,7 +157,7 @@ double benchStd(T)(Slice!(T*, 2) matrix)
     sw.start;
     for (int i; i < 1000; ++i)
     {
-        ans = matrix.flattened.sd;
+        ans = matrix.flattened.standardDeviation;
     }
     sw.stop;
     return sw.peek.total!"nsecs" * 10.0.pow(-9);
