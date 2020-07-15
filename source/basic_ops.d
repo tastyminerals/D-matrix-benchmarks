@@ -65,6 +65,10 @@ private ulong[2] argMax(T)(Slice!(T*, 2) matrix, int axis = 0)
 
 /*
 Calculate mean for the given matrix using Welford's algorithm.
+
+TIP: @fastmath shouldn't be really used with summation algorithms except the `"fast"` version of them.
+Otherwise, they may or may not behave like "fast".
+
 */
 @fastmath private double welfordMean(T)(Slice!(T*, 1) flatMatrix)
 {
@@ -157,7 +161,7 @@ double benchStd(T)(Slice!(T*, 2) matrix)
     sw.start;
     for (int i; i < 1000; ++i)
     {
-        ans = matrix.flattened.standardDeviation;
+        ans = matrix.flattened.sd;
     }
     sw.stop;
     return sw.peek.total!"nsecs" * 10.0.pow(-9);

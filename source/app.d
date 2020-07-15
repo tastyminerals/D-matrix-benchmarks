@@ -11,6 +11,9 @@ import mir.random.variable : uniformVar, normalVar;
 import mir.random.algorithm : randomSlice;
 import pretty_array;
 
+const int RUNS = 1;
+immutable int[6] DIMS = [10, 20, 60, 300, 600, 800]; // 1000, 2400
+
 /// Construct a 2D Slice given the dimensions.
 Slice!(T*, 2) makeRandomSlice2d(T)(int dimA, int dimB, T[] initRange)
 {
@@ -33,13 +36,11 @@ void printResults(double[string] experiments)
 
 void main()
 {
-	int nruns = 1;
-	immutable int[6] dims = [10, 20, 60, 300, 600, 800]; // 1000, 2400
 	double[string] experiments;
-	foreach (dim; dims)
+	foreach (dim; DIMS)
 	{
 		double[] timings;
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = bench2Dadd(makeRandomSlice2d!double(dim, dim, [
 						-0.1, 0.1
@@ -50,7 +51,7 @@ void main()
 			/ timings.length;
 		timings = null;
 
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = bench2Dmul(makeRandomSlice2d!double(dim, dim, [
 						-0.1, 0.1
@@ -61,7 +62,7 @@ void main()
 			/ timings.length;
 		timings = null;
 
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = bench2Dsum(makeRandomSlice2d!double(dim, dim, [
 						-0.1, 0.1
@@ -71,7 +72,7 @@ void main()
 		experiments[format("sum of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
 		timings = null;
 
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = benchArgMin(makeRandomSlice2d!double(dim, dim, [
 						-0.1, 0.1
@@ -81,7 +82,7 @@ void main()
 		experiments[format("argmin of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
 		timings = null;
 
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = benchArgMax(makeRandomSlice2d!double(dim, dim, [
 						-0.1, 0.1
@@ -91,7 +92,7 @@ void main()
 		experiments[format("argmax of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
 		timings = null;
 
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = benchStd(makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
@@ -99,7 +100,7 @@ void main()
 		experiments[format("std of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
 		timings = null;
 
-		foreach (i; 0 .. nruns)
+		foreach (i; 0 .. RUNS)
 		{
 			auto secs = benchMean(makeRandomSlice2d!double(dim, dim, [
 						-0.1, 0.1
