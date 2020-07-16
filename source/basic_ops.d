@@ -4,8 +4,8 @@ import std.datetime.stopwatch : StopWatch;
 import std.math : abs, approxEqual;
 import mir.ndslice;
 import mir.math.common : pow, sqrt, fastmath;
-import mir.math.sum : sum;
-import mir.math.stat : mean, standardDeviation;
+import mir.math.sum : sum, Summation;
+import mir.math.stat : mean, standardDeviation, VarianceAlgo;
 import std.stdio;
 
 /// Measure 2D matrix addition.
@@ -161,7 +161,8 @@ double benchStd(T)(Slice!(T*, 2) matrix)
     sw.start;
     for (int i; i < 1000; ++i)
     {
-        ans = matrix.flattened.sd;
+        ans = matrix.flattened.standardDeviation!(VarianceAlgo.twoPass, Summation.fast);
+
     }
     sw.stop;
     return sw.peek.total!"nsecs" * 10.0.pow(-9);
