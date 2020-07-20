@@ -12,7 +12,7 @@ import mir.random.algorithm : randomSlice;
 import pretty_array;
 
 const int RUNS = 1;
-immutable int[6] DIMS = [10, 20, 60, 300, 600, 800]; // 1000, 2400
+immutable int[4] DIMS = [10, 20, 60, 300]; //600, 800, 1000, 2400
 
 /// Construct a 2D Slice given the dimensions.
 Slice!(T*, 2) makeRandomSlice2d(T)(int dimA, int dimB, T[] initRange)
@@ -47,7 +47,7 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("elemwise sum 2x[%s, %s] matrices ()", dim, dim)] = timings.sum
+		experiments[format("elemwise sum 2x[%s, %s] matrices", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -58,7 +58,7 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("elemwise mul 2x[%s, %s] matrices ", dim, dim)] = timings.sum
+		experiments[format("elemwise mul 2x[%s, %s] matrices", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -110,6 +110,48 @@ void main()
 		experiments[format("mean of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
 		timings = null;
 
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchTranspose(makeRandomSlice2d!double(dim, dim * 2, [
+						-0.1, 0.1
+					]));
+			timings ~= secs;
+		}
+		experiments[format("transpose of [%s, %s] matrix", dim, dim * 2)] = timings.sum
+			/ timings.length;
+		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchSort(makeRandomSlice2d!double(dim, dim, [
+						-0.1, 0.1
+					]));
+			timings ~= secs;
+		}
+		experiments[format("sort of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchRandomInsert(makeRandomSlice2d!double(dim, dim, [
+						-0.1, 0.1
+					]));
+			timings ~= secs;
+		}
+		experiments[format("random insert of double into [%s, %s] matrix", dim, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchConcat(makeRandomSlice2d!double(dim, dim, [
+						-0.1, 0.1
+					]), makeRandomSlice2d!double(dim, dim, [-0.5, 0.5]));
+			timings ~= secs;
+		}
+		experiments[format("concatenate 2x [%s, %s] matrices", dim, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
 	}
 	experiments.printResults;
 

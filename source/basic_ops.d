@@ -1,12 +1,17 @@
 module basic_ops;
 
+import std.stdio;
 import std.datetime.stopwatch : StopWatch;
 import std.math : abs, approxEqual;
 import mir.ndslice;
+import mir.ndslice.sorting : sort;
 import mir.math.common : pow, sqrt, fastmath;
 import mir.math.sum : sum, Summation;
 import mir.math.stat : mean, standardDeviation, VarianceAlgo;
-import std.stdio;
+import mir.random : randIndex;
+import mir.random.algorithm : shuffle;
+import mir.algorithm.iteration : each;
+import mir.blas : gemm;
 
 /// Measure 2D matrix addition.
 double bench2Dadd(T)(Slice!(T*, 2) matrixA, Slice!(T*, 2) matrixB)
@@ -63,13 +68,7 @@ private ulong[2] argMax(T)(Slice!(T*, 2) matrix, int axis = 0)
     return matrix.maxIndex;
 }
 
-/*
-Calculate mean for the given matrix using Welford's algorithm.
-
-TIP: @fastmath shouldn't be really used with summation algorithms except the `"fast"` version of them.
-Otherwise, they may or may not behave like "fast".
-
-*/
+/// Calculate mean for the given matrix using Welford's algorithm.
 @fastmath private double welfordMean(T)(Slice!(T*, 1) flatMatrix)
 {
     pragma(inline, false);
@@ -115,7 +114,11 @@ Here we use Welford's algorithm that does the calculation in one pass.
     return (s1 / n).sqrt;
 }
 
-@fastmath private double sd(T)(Slice!(T*, 1) flatMatrix)
+/*
+TIP: @fastmath shouldn't be really used with summation algorithms except the `"fast"` version of them.
+Otherwise, they may or may not behave like "fast".
+*/
+private double sd(T)(Slice!(T*, 1) flatMatrix)
 {
     pragma(inline, false);
     if (flatMatrix.empty)
@@ -129,7 +132,7 @@ Here we use Welford's algorithm that does the calculation in one pass.
 /// Return the index of min value.
 double benchArgMin(T)(Slice!(T*, 2) matrix)
 {
-    ulong[2] ans;
+    __gshared ulong[2] ans;
     StopWatch sw;
     sw.reset;
     sw.start;
@@ -142,7 +145,7 @@ double benchArgMin(T)(Slice!(T*, 2) matrix)
 /// Return the index of max value.
 double benchArgMax(T)(Slice!(T*, 2) matrix)
 {
-    ulong[2] ans;
+    __gshared ulong[2] ans;
     StopWatch sw;
     sw.reset;
     sw.start;
@@ -161,7 +164,7 @@ double benchStd(T)(Slice!(T*, 2) matrix)
     sw.start;
     for (int i; i < 1000; ++i)
     {
-        ans = matrix.flattened.standardDeviation!(VarianceAlgo.twoPass, Summation.fast);
+        ans = matrix.flattened.standardDeviation!(VarianceAlgo.twoPass, Summation.appropriate);
 
     }
     sw.stop;
@@ -179,6 +182,60 @@ double benchMean(T)(Slice!(T*, 2) matrix)
     {
         ans = matrix.flattened.mean;
     }
+    sw.stop;
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+/// Transpose the matrix.
+double benchTranspose(T)(Slice!(T*, 2) matrix)
+{
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    for (int i; i < 1000; ++i)
+    {
+        // slice allocates and triggers transposition
+        matrix.transposed.slice;
+    }
+    sw.stop;
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+/// Sort the matrix by axis=0.
+double benchSort(T)(Slice!(T*, 2) matrix)
+{
+    matrix.flattened.shuffle;
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    matrix.byDim!0
+        .each!sort;
+    sw.stop;
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+/// Randomly insert a value.
+double benchRandomInsert(T)(Slice!(T*, 2) matrix)
+{
+    auto rowLen = matrix.byDim!0.length;
+    auto colLen = matrix.byDim!1.length;
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    for (int i; i < 1000; ++i)
+    {
+        matrix[randIndex!ulong(rowLen - 1), randIndex!ulong(colLen - 1)] = 0.62;
+    }
+    sw.stop;
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
+
+double benchConcat(T)(Slice!(T*, 2) matrix1, Slice!(T*, 2) matrix2)
+{
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    auto res = concatenation(matrix1, matrix2).slice;
     sw.stop;
     return sw.peek.total!"nsecs" * 10.0.pow(-9);
 }
