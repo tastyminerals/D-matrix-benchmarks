@@ -11,7 +11,12 @@ import mir.math.stat : mean, standardDeviation, VarianceAlgo;
 import mir.random : randIndex;
 import mir.random.algorithm : shuffle;
 import mir.algorithm.iteration : each;
-import mir.blas : gemm;
+import mir.blas : dot, gemm;
+
+double getSecs(StopWatch sw)
+{
+    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+}
 
 /// Measure 2D matrix addition.
 double bench2Dadd(T)(Slice!(T*, 2) matrixA, Slice!(T*, 2) matrixB)
@@ -23,7 +28,7 @@ double bench2Dadd(T)(Slice!(T*, 2) matrixA, Slice!(T*, 2) matrixB)
     for (int i; i < 1000; ++i)
         ans[] = matrixA + matrixB;
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Measure 2D matrix multiplication.
@@ -36,7 +41,7 @@ double bench2Dmul(T)(Slice!(T*, 2) matrixA, Slice!(T*, 2) matrixB)
     for (int i; i < 1000; ++i)
         ans[] = matrixA * matrixB;
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Measure 2D matrix sum.
@@ -49,7 +54,7 @@ double bench2Dsum(T)(Slice!(T*, 2) matrixA)
     for (int i; i < 1000; ++i)
         ans[] = matrixA.sum!"fast";
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Return the indices of minimum value along the axis.
@@ -139,7 +144,7 @@ double benchArgMin(T)(Slice!(T*, 2) matrix)
     for (int i; i < 1000; ++i)
         ans = matrix.argMin;
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Return the index of max value.
@@ -152,7 +157,7 @@ double benchArgMax(T)(Slice!(T*, 2) matrix)
     for (int i; i < 1000; ++i)
         ans = matrix.argMax;
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Calculate standard deviation of the matrix.
@@ -168,7 +173,7 @@ double benchStd(T)(Slice!(T*, 2) matrix)
 
     }
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Calculate mean of the matrix.
@@ -183,7 +188,7 @@ double benchMean(T)(Slice!(T*, 2) matrix)
         ans = matrix.flattened.mean;
     }
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Transpose the matrix.
@@ -198,7 +203,7 @@ double benchTranspose(T)(Slice!(T*, 2) matrix)
         matrix.transposed.slice;
     }
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Sort the matrix by axis=0.
@@ -211,7 +216,7 @@ double benchSort(T)(Slice!(T*, 2) matrix)
     matrix.byDim!0
         .each!sort;
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
 /// Randomly insert a value.
@@ -227,9 +232,10 @@ double benchRandomInsert(T)(Slice!(T*, 2) matrix)
         matrix[randIndex!ulong(rowLen - 1), randIndex!ulong(colLen - 1)] = 0.62;
     }
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
 }
 
+/// Concatenate two matrices.
 double benchConcat(T)(Slice!(T*, 2) matrix1, Slice!(T*, 2) matrix2)
 {
     StopWatch sw;
@@ -237,7 +243,20 @@ double benchConcat(T)(Slice!(T*, 2) matrix1, Slice!(T*, 2) matrix2)
     sw.start;
     auto res = concatenation(matrix1, matrix2).slice;
     sw.stop;
-    return sw.peek.total!"nsecs" * 10.0.pow(-9);
+    return sw.getSecs;
+}
+
+/// Perform dot-product of two matrices.
+
+/// Multiply two matrices.
+double benchGemm(T)(Slice!(T*, 2) matrix1, Slice!(T*, 2) matrix2, Slice!(T*, 2) resultMatrix)
+{
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    gemm(1.0, matrix1, matrix2, 0, resultMatrix);
+    sw.stop;
+    return sw.getSecs;
 }
 
 unittest

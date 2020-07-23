@@ -152,6 +152,18 @@ void main()
 		experiments[format("concatenate 2x [%s, %s] matrices", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchGemm(makeRandomSlice2d!double(dim, dim / 2,
+					[-0.1, 0.1]), makeRandomSlice2d!double(dim / 2, dim,
+					[-0.5, 0.5]), slice!double([dim, dim]));
+			timings ~= secs;
+		}
+		experiments[format("gemm [%s, %s] x [%s, %s] matrices", dim, dim / 2, dim / 2, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
+
 	}
 	experiments.printResults;
 

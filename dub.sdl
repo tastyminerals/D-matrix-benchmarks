@@ -24,7 +24,8 @@ buildType "tests" {
 dependency "mir-random" version="~>2.2.14"
 dependency "mir-algorithm" version="~>3.9.2"
 dependency "pretty_array" version="~>1.0.2"
-#dependency "mir-blas" version="~>1.1.13"
-#subConfiguration "mir-blas" "openblas" # "mir-blas", "blas", "cblas", "mir-lapack", "twolib", "threelib", "openblas"
+dependency "mir-blas" version="~>1.1.13"
+# After installing Intel MKL, set env vars: source /opt/intel/mkl/bin/mklvars.sh intel64
+subConfiguration "mir-blas" "mkl-sequential" # "mir-blas", "blas", "cblas", "mir-lapack", "mkl-sequential", "twolib", "threelib", "openblas"
 targetType "executable"
 dflags-ldc "-mcpu=native"
