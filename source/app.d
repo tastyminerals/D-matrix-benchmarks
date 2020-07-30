@@ -1,4 +1,5 @@
 import basic_ops;
+import advanced_ops;
 import std.stdio;
 import std.format;
 import std.array;
@@ -20,10 +21,10 @@ Slice!(T*, 2) makeRandomSlice2d(T)(int dimA, int dimB, T[] initRange)
 	return uniformVar!T(initRange[0], initRange[1]).randomSlice(dimA, dimB);
 }
 
-/// Construct a 3D Slice given the dimensions.
-Slice!(T*, 3) makeRandomSlice3d(T)(int dimA, int dimB, int dimC, T[] initRange)
+/// Construct a 1D Slice given the dimensions.
+Slice!(T*, 1) makeRandomSlice(T)(int dim, T[] initRange)
 {
-	return uniformVar!T(initRange[0], initRange[1]).randomSlice(dimA, dimB, dimC);
+	return uniformVar!T(initRange[0], initRange[1]).randomSlice(dim);
 }
 
 void printResults(double[string] experiments)
@@ -47,7 +48,7 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("elemwise sum 2x[%s, %s] matrices", dim, dim)] = timings.sum
+		experiments[format("elemwise sum 2x[%s, %s] matrices (1k loops)", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -58,7 +59,7 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("elemwise mul 2x[%s, %s] matrices", dim, dim)] = timings.sum
+		experiments[format("elemwise mul 2x[%s, %s] matrices (1k loops)", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -69,7 +70,8 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("sum of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		experiments[format("sum of [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. RUNS)
@@ -79,7 +81,8 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("argmin of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		experiments[format("argmin of [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. RUNS)
@@ -89,7 +92,8 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("argmax of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		experiments[format("argmax of [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. RUNS)
@@ -97,7 +101,8 @@ void main()
 			auto secs = benchStd(makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
 			timings ~= secs;
 		}
-		experiments[format("std of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		experiments[format("std of [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. RUNS)
@@ -107,7 +112,8 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("mean of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		experiments[format("mean of [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. RUNS)
@@ -117,7 +123,7 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("transpose of [%s, %s] matrix", dim, dim * 2)] = timings.sum
+		experiments[format("transpose of [%s, %s] matrix (1k loops)", dim, dim * 2)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -128,7 +134,8 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("sort of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		experiments[format("sort of [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
 		timings = null;
 
 		foreach (i; 0 .. RUNS)
@@ -138,7 +145,7 @@ void main()
 					]));
 			timings ~= secs;
 		}
-		experiments[format("random insert of double into [%s, %s] matrix", dim, dim)] = timings.sum
+		experiments[format("random insert of double into [%s, %s] matrix (1k loops)", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -149,7 +156,17 @@ void main()
 					]), makeRandomSlice2d!double(dim, dim, [-0.5, 0.5]));
 			timings ~= secs;
 		}
-		experiments[format("concatenate 2x [%s, %s] matrices", dim, dim)] = timings.sum
+		experiments[format("concatenate 2x [%s, %s] matrices (1k loops)", dim, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchDot(makeRandomSlice!double(dim, [-0.1, 0.1]),
+					makeRandomSlice!double(dim, [-0.5, 0.5]));
+			timings ~= secs;
+		}
+		experiments[format("dot [%s] x [%s] slices (1k loops)", dim, dim)] = timings.sum
 			/ timings.length;
 		timings = null;
 
@@ -164,12 +181,15 @@ void main()
 			/ timings.length;
 		timings = null;
 
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchLaplacian!double(dim);
+			timings ~= secs;
+		}
+		experiments[format("solve Laplacian for %s", dim)] = timings.sum / timings.length;
+		timings = null;
+
 	}
 	experiments.printResults;
 
-}
-
-unittest
-{
-	// TODO
 }
