@@ -13,7 +13,7 @@ import mir.random.algorithm : shuffle;
 import mir.algorithm.iteration : each;
 import mir.blas : dot, gemm;
 
-double getSecs(StopWatch sw)
+@safe @nogc double getSecs(StopWatch sw)
 {
     return sw.peek.total!"nsecs" * 10.0.pow(-9);
 }

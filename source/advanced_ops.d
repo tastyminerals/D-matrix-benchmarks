@@ -4,6 +4,7 @@ import basic_ops : getSecs;
 import std.stdio;
 import std.datetime.stopwatch : StopWatch;
 import mir.ndslice;
+import kaleidic.lubeck : svd, choleskyDecomp, pca;
 
 /*
 Solve Laplace's equation over a 2D grid using a simple iterative method.
@@ -52,6 +53,55 @@ double benchLaplacian(T)(int dim, int until = 100)
             }
         }
     }
+    sw.stop;
+    return sw.getSecs;
+}
+
+/// Calculate SVD of a given matrix A.
+double benchSVD(T)(Slice!(T*, 2) matrixA)
+{
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    auto r = matrixA.svd;
+    sw.stop;
+    return sw.getSecs;
+}
+
+/// Calculate SVD of a given matrix A, no GC version.
+@safe @nogc double benchSVDNoGC(T)(Slice!(T*, 2) matrixA)
+{
+    import kaleidic.lubeck2 : svd;
+
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    auto r = matrixA.svd;
+    sw.stop;
+    return sw.getSecs;
+}
+
+/// Calculate Cholesky decomposition for symmetric, positive definite matrix A.
+double benchCholeskyDec(T)(Slice!(T*, 2) matrixA)
+{
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    for (int i; i < 1000; ++i)
+    {
+        auto r = choleskyDecomp('L', matrixA);
+    }
+    sw.stop;
+    return sw.getSecs;
+}
+
+// Perform PCA on a given matrix A.
+double benchPCA(T)(Slice!(T*, 2) matrixA)
+{
+    StopWatch sw;
+    sw.reset;
+    sw.start;
+    auto r = matrixA.pca;
     sw.stop;
     return sw.getSecs;
 }

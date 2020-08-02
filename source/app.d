@@ -27,6 +27,17 @@ Slice!(T*, 1) makeRandomSlice(T)(int dim, T[] initRange)
 	return uniformVar!T(initRange[0], initRange[1]).randomSlice(dim);
 }
 
+/// Construct a 2D symmetric, positive definite matrix given the dimensions.
+Slice!(T*, 2) makeSymmetricPositiveDefiniteSlice2D(T)(int dimA, int dimB, T[] initRange)
+{
+	import std.math : abs;
+
+	auto s = uniformVar!T(initRange[0], initRange[1]).randomSlice(dimA, dimB);
+	s.diagonal.each!((ref i) { i = i.abs; }); // abs the diagonal values
+	s.eachUploPair!((upper, ref lower) { lower = upper; }); // mirror the upper to lower values
+	return s;
+}
+
 void printResults(double[string] experiments)
 {
 	foreach (tup; experiments.byPair.array.sort!((a, b) => a.key < b.key))
@@ -189,7 +200,44 @@ void main()
 		experiments[format("solve Laplacian for %s", dim)] = timings.sum / timings.length;
 		timings = null;
 
-	}
-	experiments.printResults;
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchSVD(makeRandomSlice2d!double(dim, dim, [-0.1, 0.1]));
+			timings ~= secs;
+		}
+		experiments[format("SVD of [%s, %s] matrix", dim, dim)] = timings.sum / timings.length;
+		timings = null;
 
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchSVDNoGC(makeRandomSlice2d!double(dim, dim, [
+						-0.1, 0.1
+					]));
+			timings ~= secs;
+		}
+		experiments[format("SVD (no GC version) of [%s, %s] matrix", dim, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchCholeskyDec(makeSymmetricPositiveDefiniteSlice2D(dim,
+					dim, [-0.1, 0.1]));
+			timings ~= secs;
+		}
+		experiments[format("Cholesky decomposition of [%s, %s] matrix (1000 loops)", dim, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
+
+		foreach (i; 0 .. RUNS)
+		{
+			auto secs = benchPCA(makeRandomSlice2d(dim, dim, [-0.1, 0.1]));
+			timings ~= secs;
+		}
+		experiments[format("PCA decomposition of [%s, %s] matrix", dim, dim)] = timings.sum
+			/ timings.length;
+		timings = null;
+	}
+
+	experiments.printResults;
 }
