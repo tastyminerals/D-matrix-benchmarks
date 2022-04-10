@@ -1,3 +1,6 @@
+/++
+    A collection of complex matrix operations such as SVD, Cholesky decomposition and PCA.
++/
 module bench.complex;
 
 import bench.basic : getSecs;

@@ -1,3 +1,6 @@
+/++
+    A set of functions to create 1D and 2D slices.
++/
 module utils;
 
 import std.algorithm : sort;
