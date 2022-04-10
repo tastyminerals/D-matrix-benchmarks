@@ -1,50 +1,14 @@
-import basic_ops;
-import advanced_ops;
+import bench.basic;
+import bench.complex;
+import utils;
 import std.stdio;
 import std.format;
-import std.array;
-import std.algorithm : sort;
-
 import mir.ndslice;
 import mir.math.sum;
 import mir.random : threadLocalPtr, Random;
-import mir.random.variable : uniformVar, normalVar;
-import mir.random.algorithm : randomSlice;
-import pretty_array;
 
 const int RUNS = 1;
 immutable int[4] DIMS = [10, 20, 60, 300]; //600, 800, 1000, 2400
-
-/// Construct a 2D Slice given the dimensions.
-Slice!(T*, 2) makeRandomSlice2d(T)(int dimA, int dimB, T[] initRange)
-{
-	return uniformVar!T(initRange[0], initRange[1]).randomSlice(dimA, dimB);
-}
-
-/// Construct a 1D Slice given the dimensions.
-Slice!(T*, 1) makeRandomSlice(T)(int dim, T[] initRange)
-{
-	return uniformVar!T(initRange[0], initRange[1]).randomSlice(dim);
-}
-
-/// Construct a 2D symmetric, positive definite matrix given the dimensions.
-Slice!(T*, 2) makeSymmetricPositiveDefiniteSlice2D(T)(int dimA, int dimB, T[] initRange)
-{
-	import std.math : abs;
-
-	auto s = uniformVar!T(initRange[0], initRange[1]).randomSlice(dimA, dimB);
-	s.diagonal.each!((ref i) { i = i.abs; }); // abs the diagonal values
-	s.eachUploPair!((upper, ref lower) { lower = upper; }); // mirror the upper to lower values
-	return s;
-}
-
-void printResults(double[string] experiments)
-{
-	foreach (tup; experiments.byPair.array.sort!((a, b) => a.key < b.key))
-	{
-		writeln(format("%s %s", tup.key, tup.value));
-	}
-}
 
 void main()
 {
@@ -174,7 +138,7 @@ void main()
 		foreach (i; 0 .. RUNS)
 		{
 			auto secs = benchDot(makeRandomSlice!double(dim, [-0.1, 0.1]),
-					makeRandomSlice!double(dim, [-0.5, 0.5]));
+				makeRandomSlice!double(dim, [-0.5, 0.5]));
 			timings ~= secs;
 		}
 		experiments[format("dot [%s] x [%s] slices (1k loops)", dim, dim)] = timings.sum

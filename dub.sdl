@@ -1,7 +1,7 @@
-name "mir_benchmarks_2"
-description "D Mir benchmarks against NumPy."
-authors "tasty"
-copyright "Copyright © 2020, tasty"
+name "d-matrix-benchmarks"
+description "Try out and benchmark misc matrix operations in D"
+authors "tastyminerals"
+copyright "Copyright © 2020, tastyminerals"
 license "MIT"
 
 buildType "release" {
@@ -10,7 +10,7 @@ buildType "release" {
 }
 
 buildType "debug" {
-    buildOptions "debugMode" "debugInfo" "optimize"
+    buildOptions "debugMode" "debugInfo"
 }
 
 buildType "debug-profile" {
@@ -21,12 +21,18 @@ buildType "tests" {
     buildOptions "unittests"
 }
 
-dependency "pretty_array" version="~>1.0.2"
-dependency "mir-random" version="~>2.2.14"
-dependency "mir-algorithm" version="~>3.9.2"
-dependency "mir-blas" version="~>1.1.13"
-dependency "lubeck" version="~>1.3.0"
+dependency "mir-random" version="~>2.2.19"
+dependency "mir-algorithm" version="~>3.12.27"
+dependency "mir-blas" version="~>1.1.14"
+dependency "lubeck" version="~>1.5.1"
+
 # After installing Intel MKL, set env vars: source /opt/intel/mkl/bin/mklvars.sh intel64
 subConfiguration "mir-blas" "mkl-sequential" # "mir-blas", "blas", "cblas", "mir-lapack", "mkl-sequential", "twolib", "threelib", "openblas"
+
+# Explicit mkl links for building on Windows
+lflags `C:\Program Files (x86)\Intel\oneAPI\mkl\2022.0.3\lib\intel64\mkl_core.lib` platform="windows-x86_64"
+lflags `C:\Program Files (x86)\Intel\oneAPI\mkl\2022.0.3\lib\intel64\mkl_sequential.lib` platform="windows-x86_64"
+lflags `C:\Program Files (x86)\Intel\oneAPI\mkl\2022.0.3\lib\intel64\mkl_intel_lp64.lib` platform="windows-x86_64"
+
 targetType "executable"
 dflags-ldc "-mcpu=native"
